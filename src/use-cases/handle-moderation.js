@@ -1,9 +1,11 @@
-export default function makeHandleModeration ({
-  isQuestionable,
-  initiateReview
-}) {
-  return async function handleModeration ({ comment }) {
-    const shouldModerate = await isQuestionable({
+export class HandleModeration {
+  constructor ({ isQuestionable, initiateReview }) {
+    this.isQuestionable = isQuestionable
+    this.initiateReview = initiateReview
+  }
+
+  async execute ({ comment }) {
+    const shouldModerate = await this.isQuestionable({
       text: comment.getText(),
       ip: comment.getSource().getIp(),
       browser: comment.getSource().getBrowser(),
@@ -12,13 +14,17 @@ export default function makeHandleModeration ({
       createdOn: comment.getCreatedOn(),
       modifiedOn: comment.getModifiedOn()
     })
-    const moderated = { ...comment }
     if (shouldModerate) {
-      initiateReview({ id: moderated.getId(), content: moderated.getText() })
-      moderated.unPublish()
+      this.initiateReview({ id: comment.getId(), content: comment.getText() })
+      comment.unPublish()
     } else {
-      moderated.publish()
+      comment.publish()
     }
-    return moderated
+    return comment
   }
+}
+
+export default function makeHandleModeration (dependencies) {
+  const handleModeration = new HandleModeration(dependencies)
+  return handleModeration.execute.bind(handleModeration)
 }

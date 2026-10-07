@@ -1,10 +1,14 @@
-export default function makeGetComments ({ listComments }) {
-  return async function getComments (httpRequest) {
+export class GetCommentsController {
+  constructor ({ listComments }) {
+    this.listComments = listComments
+  }
+
+  async execute (httpRequest) {
     const headers = {
       'Content-Type': 'application/json'
     }
     try {
-      const postComments = await listComments({
+      const postComments = await this.listComments({
         postId: httpRequest.query.postId
       })
       return {
@@ -24,4 +28,9 @@ export default function makeGetComments ({ listComments }) {
       }
     }
   }
+}
+
+export default function makeGetComments (dependencies) {
+  const getCommentsController = new GetCommentsController(dependencies)
+  return getCommentsController.execute.bind(getCommentsController)
 }

@@ -1,43 +1,47 @@
 import makeComment from '../comment'
 
-export default function makeRemoveComment ({ commentsDb }) {
-  return async function removeComment ({ id } = {}) {
+export class RemoveComment {
+  constructor ({ commentsDb }) {
+    this.commentsDb = commentsDb
+  }
+
+  async execute ({ id } = {}) {
     if (!id) {
       throw new Error('You must supply a comment id.')
     }
 
-    const commentToDelete = await commentsDb.findById({ id })
+    const commentToDelete = await this.commentsDb.findById({ id })
 
     if (!commentToDelete) {
-      return deleteNothing()
+      return this.deleteNothing()
     }
 
-    if (await hasReplies(commentToDelete)) {
-      return softDelete(commentToDelete)
+    if (await this.hasReplies(commentToDelete)) {
+      return this.softDelete(commentToDelete)
     }
 
-    if (await isOnlyReplyOfDeletedParent(commentToDelete)) {
-      return deleteCommentAndParent(commentToDelete)
+    if (await this.isOnlyReplyOfDeletedParent(commentToDelete)) {
+      return this.deleteCommentAndParent(commentToDelete)
     }
 
-    return hardDelete(commentToDelete)
+    return this.hardDelete(commentToDelete)
   }
 
-  async function hasReplies ({ id: commentId }) {
-    const replies = await commentsDb.findReplies({
+  async hasReplies ({ id: commentId }) {
+    const replies = await this.commentsDb.findReplies({
       commentId,
       publishedOnly: false
     })
     return replies.length > 0
   }
 
-  async function isOnlyReplyOfDeletedParent (comment) {
+  async isOnlyReplyOfDeletedParent (comment) {
     if (!comment.replyToId) {
       return false
     }
-    const parent = await commentsDb.findById({ id: comment.replyToId })
+    const parent = await this.commentsDb.findById({ id: comment.replyToId })
     if (parent && makeComment(parent).isDeleted()) {
-      const replies = await commentsDb.findReplies({
+      const replies = await this.commentsDb.findReplies({
         commentId: parent.id,
         publishedOnly: false
       })
@@ -46,7 +50,7 @@ export default function makeRemoveComment ({ commentsDb }) {
     return false
   }
 
-  function deleteNothing () {
+  deleteNothing () {
     return {
       deletedCount: 0,
       softDelete: false,
@@ -54,10 +58,10 @@ export default function makeRemoveComment ({ commentsDb }) {
     }
   }
 
-  async function softDelete (commentInfo) {
+  async softDelete (commentInfo) {
     const toDelete = makeComment(commentInfo)
     toDelete.markDeleted()
-    await commentsDb.update({
+    await this.commentsDb.update({
       id: toDelete.getId(),
       author: toDelete.getAuthor(),
       text: toDelete.getText(),
@@ -71,10 +75,10 @@ export default function makeRemoveComment ({ commentsDb }) {
     }
   }
 
-  async function deleteCommentAndParent (comment) {
+  async deleteCommentAndParent (comment) {
     await Promise.all([
-      commentsDb.remove(comment),
-      commentsDb.remove({ id: comment.replyToId })
+      this.commentsDb.remove(comment),
+      this.commentsDb.remove({ id: comment.replyToId })
     ])
     return {
       deletedCount: 2,
@@ -83,12 +87,17 @@ export default function makeRemoveComment ({ commentsDb }) {
     }
   }
 
-  async function hardDelete (comment) {
-    await commentsDb.remove(comment)
+  async hardDelete (comment) {
+    await this.commentsDb.remove(comment)
     return {
       deletedCount: 1,
       softDelete: false,
       message: 'Comment deleted.'
     }
   }
+}
+
+export default function makeRemoveComment (dependencies) {
+  const removeComment = new RemoveComment(dependencies)
+  return removeComment.execute.bind(removeComment)
 }

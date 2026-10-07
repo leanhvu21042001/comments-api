@@ -1,15 +1,20 @@
 import makeComment from '../comment'
-export default function makeAddComment ({ commentsDb, handleModeration }) {
-  return async function addComment (commentInfo) {
+export class AddComment {
+  constructor ({ commentsDb, handleModeration }) {
+    this.commentsDb = commentsDb
+    this.handleModeration = handleModeration
+  }
+
+  async execute (commentInfo) {
     const comment = makeComment(commentInfo)
-    const exists = await commentsDb.findByHash({ hash: comment.getHash() })
+    const exists = await this.commentsDb.findByHash({ hash: comment.getHash() })
     if (exists) {
       return exists
     }
 
-    const moderated = await handleModeration({ comment })
+    const moderated = await this.handleModeration({ comment })
     const commentSource = moderated.getSource()
-    return commentsDb.insert({
+    return this.commentsDb.insert({
       author: moderated.getAuthor(),
       createdOn: moderated.getCreatedOn(),
       hash: moderated.getHash(),
@@ -26,4 +31,9 @@ export default function makeAddComment ({ commentsDb, handleModeration }) {
       text: moderated.getText()
     })
   }
+}
+
+export default function makeAddComment (dependencies) {
+  const addComment = new AddComment(dependencies)
+  return addComment.execute.bind(addComment)
 }

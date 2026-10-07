@@ -1,13 +1,18 @@
 import makeComment from '../comment'
-export default function makeEditComment ({ commentsDb, handleModeration }) {
-  return async function editComment ({ id, ...changes } = {}) {
+export class EditComment {
+  constructor ({ commentsDb, handleModeration }) {
+    this.commentsDb = commentsDb
+    this.handleModeration = handleModeration
+  }
+
+  async execute ({ id, ...changes } = {}) {
     if (!id) {
       throw new Error('You must supply an id.')
     }
     if (!changes.text) {
       throw new Error('You must supply text.')
     }
-    const existing = await commentsDb.findById({ id })
+    const existing = await this.commentsDb.findById({ id })
 
     if (!existing) {
       throw new RangeError('Comment not found.')
@@ -16,8 +21,8 @@ export default function makeEditComment ({ commentsDb, handleModeration }) {
     if (comment.getHash() === existing.hash) {
       return existing
     }
-    const moderated = await handleModeration({ comment })
-    const updated = await commentsDb.update({
+    const moderated = await this.handleModeration({ comment })
+    const updated = await this.commentsDb.update({
       id: moderated.getId(),
       published: moderated.isPublished(),
       modifiedOn: moderated.getModifiedOn(),
@@ -26,4 +31,9 @@ export default function makeEditComment ({ commentsDb, handleModeration }) {
     })
     return { ...existing, ...updated }
   }
+}
+
+export default function makeEditComment (dependencies) {
+  const editComment = new EditComment(dependencies)
+  return editComment.execute.bind(editComment)
 }

@@ -1,5 +1,9 @@
-export default function makePatchComment ({ editComment }) {
-  return async function patchComment (httpRequest) {
+export class PatchCommentController {
+  constructor ({ editComment }) {
+    this.editComment = editComment
+  }
+
+  async execute (httpRequest) {
     try {
       const { source = {}, ...commentInfo } = httpRequest.body
       source.ip = httpRequest.ip
@@ -12,7 +16,7 @@ export default function makePatchComment ({ editComment }) {
         source,
         id: httpRequest.params.id
       }
-      const patched = await editComment(toEdit)
+      const patched = await this.editComment(toEdit)
       return {
         headers: {
           'Content-Type': 'application/json',
@@ -46,4 +50,9 @@ export default function makePatchComment ({ editComment }) {
       }
     }
   }
+}
+
+export default function makePatchComment (dependencies) {
+  const patchCommentController = new PatchCommentController(dependencies)
+  return patchCommentController.execute.bind(patchCommentController)
 }
