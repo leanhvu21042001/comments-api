@@ -50,9 +50,9 @@ export class PatchCommentController {
       }
     }
   }
+}
 
-  export default function makePatchComment (dependencies) {
-    const patchCommentController = new PatchCommentController(dependencies)
-    return patchCommentController.execute.bind(patchCommentController)
-  }
+export default function makePatchComment (dependencies) {
+  const patchCommentController = new PatchCommentController(dependencies)
+  return patchCommentController.execute.bind(patchCommentController)
 }

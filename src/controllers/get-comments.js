@@ -28,9 +28,9 @@ export class GetCommentsController {
       }
     }
   }
+}
 
-  export default function makeGetComments (dependencies) {
-    const getCommentsController = new GetCommentsController(dependencies)
-    return getCommentsController.execute.bind(getCommentsController)
-  }
+export default function makeGetComments (dependencies) {
+  const getCommentsController = new GetCommentsController(dependencies)
+  return getCommentsController.execute.bind(getCommentsController)
 }

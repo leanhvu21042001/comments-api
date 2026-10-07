@@ -26,9 +26,9 @@ export class DeleteCommentController {
       }
     }
   }
+}
 
-  export default function makeDeleteComment (dependencies) {
-    const deleteCommentController = new DeleteCommentController(dependencies)
-    return deleteCommentController.execute.bind(deleteCommentController)
-  }
+export default function makeDeleteComment (dependencies) {
+  const deleteCommentController = new DeleteCommentController(dependencies)
+  return deleteCommentController.execute.bind(deleteCommentController)
 }
