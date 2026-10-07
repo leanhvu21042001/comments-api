@@ -10,20 +10,32 @@ import makePostComment from './post-comment'
 import makePatchComment from './patch-comment'
 import notFound from './not-found'
 
-const deleteComment = makeDeleteComment({ removeComment })
-const getComments = makeGetComments({
-  listComments
-})
-const postComment = makePostComment({ addComment })
-const patchComment = makePatchComment({ editComment })
+class CommentController {
+  constructor () {
+    this.deleteComment = makeDeleteComment({ removeComment })
+    this.getComments = makeGetComments({
+      listComments
+    })
+    this.postComment = makePostComment({ addComment })
+    this.patchComment = makePatchComment({ editComment })
+    this.notFound = notFound
+  }
+}
 
-const commentController = Object.freeze({
+const commentController = new CommentController()
+const {
   deleteComment,
   getComments,
-  notFound,
+  notFound: notFoundController,
   postComment,
   patchComment
-})
+} = commentController
 
 export default commentController
-export { deleteComment, getComments, notFound, postComment, patchComment }
+export {
+  deleteComment,
+  getComments,
+  notFoundController as notFound,
+  postComment,
+  patchComment
+}

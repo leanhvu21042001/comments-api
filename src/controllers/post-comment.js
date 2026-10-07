@@ -1,5 +1,9 @@
-export default function makePostComment ({ addComment }) {
-  return async function postComment (httpRequest) {
+export class PostCommentController {
+  constructor ({ addComment }) {
+    this.addComment = addComment
+  }
+
+  async execute (httpRequest) {
     try {
       const { source = {}, ...commentInfo } = httpRequest.body
       source.ip = httpRequest.ip
@@ -7,7 +11,7 @@ export default function makePostComment ({ addComment }) {
       if (httpRequest.headers['Referer']) {
         source.referrer = httpRequest.headers['Referer']
       }
-      const posted = await addComment({
+      const posted = await this.addComment({
         ...commentInfo,
         source
       })
@@ -34,4 +38,9 @@ export default function makePostComment ({ addComment }) {
       }
     }
   }
+}
+
+export default function makePostComment (dependencies) {
+  const postCommentController = new PostCommentController(dependencies)
+  return postCommentController.execute.bind(postCommentController)
 }
